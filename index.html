@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Misi Teka Silang Matematik</title>
+<style>
+:root{--navy:#183153;--blue:#2463a6;--gold:#ffd166;--paper:#fffdf5;--green:#23845b;--red:#c74343}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#e7f3ff,#fff5d9);color:var(--navy)}
+header{padding:24px 16px;text-align:center;background:var(--navy);color:white}
+header h1{margin:0 0 8px;font-size:clamp(24px,4vw,38px)}header p{margin:0;color:#dcecff}
+main{max-width:1000px;margin:22px auto;padding:0 14px 40px}
+.panel{background:white;border-radius:18px;padding:18px;box-shadow:0 8px 24px #18315318;margin-bottom:16px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between}.stat{background:#edf5ff;border-radius:12px;padding:10px 14px;min-width:120px;flex:1;text-align:center}
+.stat b{display:block;font-size:22px;margin-top:4px}
+.progress{height:12px;background:#e6edf5;border-radius:99px;overflow:hidden;margin-top:12px}.bar{height:100%;width:0;background:var(--green);transition:width .3s}
+.setnav{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.pill{padding:9px 13px;border-radius:99px;background:#e8edf3;color:#68788b;font-weight:bold}.pill.active{background:var(--gold);color:#493900}.pill.done{background:#d9f3e7;color:#17613f}
+h2{margin:0 0 8px}.hint{color:#53677e;line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-top:16px}
+.clue{display:flex;align-items:center;gap:10px;border:2px solid #d9e5f1;border-radius:12px;padding:10px;background:var(--paper);min-height:62px}
+.num{width:28px;height:28px;display:grid;place-items:center;background:var(--navy);color:white;border-radius:7px;font-weight:bold;flex-shrink:0}
+.equation{font-size:18px;font-weight:bold;flex:1;white-space:nowrap}
+.answer{width:76px;padding:9px 7px;border:2px solid #9bb4ce;border-radius:8px;font-size:18px;text-align:center;font-weight:bold;color:var(--navy)}
+.answer:focus{outline:3px solid #b9d9ff;border-color:var(--blue)}
+.answer.correct{border-color:var(--green);background:#e6f7ee}.answer.wrong{border-color:var(--red);background:#fff0f0}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+button{border:0;border-radius:10px;padding:12px 18px;font-weight:bold;font-size:15px;cursor:pointer}
+.primary{background:var(--blue);color:white}.secondary{background:#e8edf3;color:var(--navy)}button:disabled{opacity:.45;cursor:not-allowed}
+.feedback{margin-top:12px;font-weight:bold;min-height:24px}.good{color:var(--green)}.bad{color:var(--red)}
+#startScreen{text-align:center;padding:28px 14px}#finishScreen{display:none;text-align:center}
+.big{font-size:46px;margin:6px}.badge{display:inline-block;background:#fff0b8;padding:8px 14px;border-radius:99px;font-weight:bold}
+footer{text-align:center;color:#60748b;font-size:13px;margin-top:20px}
+@media(max-width:520px){.equation{font-size:16px}.answer{width:66px}.clue{gap:7px;padding:8px}}
+</style>
+</head>
+<body>
+<header><h1>🧩 Misi Teka Silang Matematik</h1><p>Lengkapkan ayat Matematik dan buka keempat-empat misi!</p></header>
+<main>
+<section class="panel" id="startScreen">
+  <div class="big">🔢 ✏️ ⭐</div><h2>Selamat datang, Wira Matematik!</h2>
+  <p class="hint">Selesaikan 4 set soalan: tambah, tolak, darab dan bahagi. Isi nombor yang hilang pada setiap ayat Matematik. Semua 10 jawapan dalam satu set mesti betul untuk membuka set seterusnya.</p>
+  <p class="hint"><b>Pemarkahan:</b> 1 markah bagi setiap jawapan betul (jumlah 40 markah). Masa keseluruhan turut direkodkan. Cuba dapatkan markah penuh dalam masa terpantas!</p>
+  <button class="primary" onclick="startGame()">MULA PERMAINAN</button>
+</section>
+<section class="panel" id="game" style="display:none">
+  <div class="stats">
+    <div class="stat">Set semasa<b id="setStat">1 / 4</b></div>
+    <div class="stat">Markah<b id="score">0 / 40</b></div>
+    <div class="stat">Masa<b id="timer">00:00</b></div>
+    <div class="stat">Jawapan betul<b id="correctCount">0</b></div>
+  </div>
+  <div class="progress"><div class="bar" id="bar"></div></div>
+  <div class="setnav" id="setnav"></div>
+  <div style="margin-top:16px"><h2 id="setTitle">Set 1: Operasi Tambah</h2><p class="hint" id="instructions">Isi nombor yang hilang dalam setiap ayat Matematik.</p></div>
+  <div class="grid" id="questions"></div>
+  <div class="actions">
+    <button class="primary" id="checkBtn" onclick="checkSet()">SEMAK JAWAPAN</button>
+    <button class="secondary" onclick="clearSet()">KOSONGKAN SET</button>
+  </div>
+  <div class="feedback" id="feedback" aria-live="polite"></div>
+</section>
+<section class="panel" id="finishScreen">
+  <div class="big">🏆🎉</div><h2>Tahniah, Wira Matematik!</h2>
+  <p>Anda telah menamatkan semua empat set.</p>
+  <div class="stats">
+    <div class="stat">Markah akhir<b id="finalScore">40 / 40</b></div>
+    <div class="stat">Masa digunakan<b id="finalTime">00:00</b></div>
+    <div class="stat">Jawapan betul<b id="finalCorrect">40 / 40</b></div>
+  </div>
+  <p class="badge" id="remark">Hebat!</p><div class="actions" style="justify-content:center"><button class="primary" onclick="location.reload()">MAIN SEMULA</button></div>
+</section>
+<footer>Permainan latihan Matematik sekolah rendah • Selesaikan setiap set untuk meneruskan misi.</footer>
+</main>
+<script>
+const sets = [
+ {name:"Operasi Tambah",icon:"➕",q:[
+  ["12 + ___ = 20",8],["15 + ___ = 27",12],["23 + ___ = 40",17],["34 + ___ = 50",16],["18 + ___ = 35",17],
+  ["26 + ___ = 44",18],["41 + ___ = 60",19],["32 + ___ = 75",43],["125 + ___ = 200",75],["248 + ___ = 300",52]]},
+ {name:"Operasi Tolak",icon:"➖",q:[
+  ["20 − ___ = 12",8],["35 − ___ = 20",15],["48 − ___ = 30",18],["60 − ___ = 25",35],["52 − ___ = 34",18],
+  ["75 − ___ = 49",26],["90 − ___ = 55",35],["100 − ___ = 63",37],["150 − ___ = 85",65],["300 − ___ = 175",125]]},
+ {name:"Operasi Darab",icon:"✖️",q:[
+  ["3 × ___ = 18",6],["4 × ___ = 28",7],["5 × ___ = 45",9],["6 × ___ = 36",6],["7 × ___ = 56",8],
+  ["8 × ___ = 72",9],["9 × ___ = 63",7],["12 × ___ = 48",4],["11 × ___ = 99",9],["15 × ___ = 120",8]]},
+ {name:"Operasi Bahagi",icon:"➗",q:[
+  ["20 ÷ ___ = 4",5],["36 ÷ ___ = 6",6],["40 ÷ ___ = 8",5],["56 ÷ ___ = 7",8],["72 ÷ ___ = 9",8],
+  ["81 ÷ ___ = 9",9],["100 ÷ ___ = 10",10],["96 ÷ ___ = 12",8],["144 ÷ ___ = 12",12],["150 ÷ ___ = 15",10]]}
+];
+let current=0, score=0, started=false, startAt=0, timerId=null, solved=[false,false,false,false], setScores=[0,0,0,0];
+const $=id=>document.getElementById(id);
+function startGame(){started=true;startAt=Date.now();$("startScreen").style.display="none";$("game").style.display="block";timerId=setInterval(updateTimer,500);renderSet();}
+function elapsed(){return Math.floor((Date.now()-startAt)/1000)}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function updateTimer(){$("timer").textContent=fmt(elapsed())}
+function renderNav(){
+ $("setnav").innerHTML=sets.map((s,i)=>`<span class="pill ${i===current?'active':solved[i]?'done':''}">${solved[i]?'✓ ':''}Set ${i+1}</span>`).join("");
+}
+function renderSet(){
+ const oldNext=document.getElementById("nextBtn");if(oldNext)oldNext.remove();
+ const s=sets[current];$("setStat").textContent=(current+1)+" / 4";$("setTitle").textContent=`${s.icon} Set ${current+1}: ${s.name}`;
+ $("questions").innerHTML=s.q.map((q,i)=>`<label class="clue"><span class="num">${i+1}</span><span class="equation">${q[0].replace("___",'<span style="color:#2463a6">?</span>')}</span><input class="answer" type="number" inputmode="numeric" id="a${i}" aria-label="Jawapan soalan ${i+1}" ${solved[current]?'disabled':''}></label>`).join("");
+ $("feedback").textContent=solved[current]?"Set ini telah diselesaikan.":"";$("checkBtn").disabled=solved[current];renderNav();updateStats();
+}
+function updateStats(){
+ $("score").textContent=score+" / 40";$("correctCount").textContent=score;$("bar").style.width=(score/40*100)+"%";
+}
+function checkSet(){
+ const qs=sets[current].q;let right=0,empty=0;
+ qs.forEach((q,i)=>{const el=$("a"+i);const val=el.value.trim();el.classList.remove("correct","wrong");
+ if(val===""){empty++;el.classList.add("wrong");}
+ else if(Number(val)===q[1]){right++;el.classList.add("correct");}
+ else el.classList.add("wrong");
+ });
+ if(right===10){
+   if(!solved[current]){solved[current]=true;setScores[current]=10;score+=10;}
+   $("feedback").className="feedback good";$("feedback").textContent="Hebat! Semua 10 jawapan betul. Set seterusnya dibuka.";
+   $("checkBtn").disabled=true;updateStats();renderNav();
+   if(current===3){setTimeout(finish,900);}
+   else{$("checkBtn").textContent="SET SELESAI ✓";const next=document.createElement("button");next.id="nextBtn";next.className="primary";next.textContent="TERUSKAN KE SET "+(current+2);next.onclick=()=>{current++;renderSet();};$("checkBtn").after(next);$("checkBtn").disabled=true;}
+ }else{
+   $("feedback").className="feedback bad";$("feedback").textContent=`${right}/10 betul. ${empty?empty+" belum diisi. ":""}Betulkan jawapan bertanda merah, kemudian semak semula.`;
+ }
+}
+function clearSet(){if(solved[current])return;sets[current].q.forEach((q,i)=>{const el=$("a"+i);el.value="";el.classList.remove("wrong","correct")});$("feedback").textContent="";}
+function finish(){
+ clearInterval(timerId);$("game").style.display="none";$("finishScreen").style.display="block";
+ $("finalScore").textContent=score+" / 40";$("finalCorrect").textContent=score+" / 40";$("finalTime").textContent=fmt(elapsed());
+ $("remark").textContent=score===40?"Cemerlang! Anda Wira Matematik!":"Syabas kerana menyelesaikan semua misi!";
+}
+</script>
+</body></html>
